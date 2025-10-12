@@ -1,0 +1,200 @@
+version: '3.8'
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  iot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${HADOOP_SUBNET}
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+  yarn_logs:
+  historyserver_data:
+
+# ============================================
+# SERVICES
+# ============================================
+services:
+
+  # HDFS - NAMENODE
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    hostname: namenode
+    restart: unless-stopped
+    ports:
+      - "${HDFS_NAMENODE_HTTP_PORT}:9870"
+      - "${HDFS_NAMENODE_PORT}:9000"
+    environment:
+      - CLUSTER_NAME=${CLUSTER_NAME}
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - CORE_CONF_hadoop_proxyuser_hue_hosts=*
+      - CORE_CONF_hadoop_proxyuser_hue_groups=*
+      - HDFS_CONF_dfs_replication=${HDFS_REPLICATION_FACTOR}
+      - HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check=false
+      - HDFS_CONF_dfs_permissions_enabled=false
+      - HDFS_CONF_dfs_webhdfs_enabled=true
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+  # HDFS - DATANODE 1
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    hostname: datanode1
+    restart: unless-stopped
+    depends_on:
+      namenode:
+        condition: service_healthy
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - HDFS_CONF_dfs_replication=${HDFS_REPLICATION_FACTOR}
+      - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop/dfs/data
+    volumes:
+      - datanode1_data:/hadoop/dfs/data
+    networks:
+      - iot-network
+
+  # HDFS - DATANODE 2
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    hostname: datanode2
+    restart: unless-stopped
+    depends_on:
+      namenode:
+        condition: service_healthy
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - HDFS_CONF_dfs_replication=${HDFS_REPLICATION_FACTOR}
+      - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop/dfs/data
+    volumes:
+      - datanode2_data:/hadoop/dfs/data
+    networks:
+      - iot-network
+
+  # YARN - RESOURCEMANAGER
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    hostname: resourcemanager
+    restart: unless-stopped
+    depends_on:
+      namenode:
+        condition: service_healthy
+    ports:
+      - "${YARN_RESOURCEMANAGER_PORT}:8088"
+      - "8030:8030"
+      - "8031:8031"
+      - "8032:8032"
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - YARN_CONF_yarn_resourcemanager_address=resourcemanager:8032
+      - YARN_CONF_yarn_resourcemanager_scheduler_address=resourcemanager:8030
+      - YARN_CONF_yarn_resourcemanager_resource__tracker_address=resourcemanager:8031
+      - YARN_CONF_yarn_resourcemanager_webapp_address=resourcemanager:8088
+      - YARN_CONF_yarn_scheduler_minimum___allocation___mb=512
+      - YARN_CONF_yarn_scheduler_maximum___allocation___mb=4096
+      - YARN_CONF_yarn_nodemanager_resource_memory___mb=${YARN_NODEMANAGER_MEMORY_MB}
+      - YARN_CONF_yarn_nodemanager_resource_cpu___vcores=${YARN_NODEMANAGER_VCORES}
+      - YARN_CONF_yarn_log___aggregation___enable=true
+      - YARN_CONF_yarn_log_server_url=http://historyserver:8188/applicationhistory/logs/
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/cluster"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # YARN - NODEMANAGER 1
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager1
+    hostname: nodemanager1
+    restart: unless-stopped
+    depends_on:
+      resourcemanager:
+        condition: service_healthy
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - YARN_CONF_yarn_resourcemanager_address=resourcemanager:8032
+      - YARN_CONF_yarn_nodemanager_aux___services=mapreduce_shuffle
+      - YARN_CONF_yarn_nodemanager_resource_memory___mb=${YARN_NODEMANAGER_MEMORY_MB}
+      - YARN_CONF_yarn_nodemanager_resource_cpu___vcores=${YARN_NODEMANAGER_VCORES}
+      - YARN_CONF_yarn_nodemanager_vmem___check___enabled=false
+      - YARN_CONF_yarn_nodemanager_pmem___check___enabled=false
+      - YARN_CONF_yarn_nodemanager_disk___health___checker_max___disk___utilization___per___disk___percentage=95
+    networks:
+      - iot-network
+
+  # YARN - NODEMANAGER 2
+  nodemanager2:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager2
+    hostname: nodemanager2
+    restart: unless-stopped
+    depends_on:
+      resourcemanager:
+        condition: service_healthy
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - YARN_CONF_yarn_resourcemanager_address=resourcemanager:8032
+      - YARN_CONF_yarn_nodemanager_aux___services=mapreduce_shuffle
+      - YARN_CONF_yarn_nodemanager_resource_memory___mb=${YARN_NODEMANAGER_MEMORY_MB}
+      - YARN_CONF_yarn_nodemanager_resource_cpu___vcores=${YARN_NODEMANAGER_VCORES}
+      - YARN_CONF_yarn_nodemanager_vmem___check___enabled=false
+      - YARN_CONF_yarn_nodemanager_pmem___check___enabled=false
+      - YARN_CONF_yarn_nodemanager_disk___health___checker_max___disk___utilization___per___disk___percentage=95
+    networks:
+      - iot-network
+    
+
+  # YARN -HISTORY SERVERS
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    hostname: historyserver
+    restart: unless-stopped
+    depends_on:
+      namenode:
+        condition: service_healthy
+    ports:
+      - "8188:8188"
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - YARN_CONF_yarn_timeline___service_enabled=true
+      - YARN_CONF_yarn_timeline___service_generic___application___history_enabled=true
+      - YARN_CONF_yarn_log___aggregation___enable=true
+    volumes:
+      - historyserver_data:/hadoop/yarn/timeline
+    networks:
+      - iot-network
