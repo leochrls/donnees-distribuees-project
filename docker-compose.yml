@@ -288,6 +288,9 @@ services:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
       YARN_CONF_yarn_resourcemanager_hostname: resourcemanager
       YARN_CONF_yarn_resourcemanager_address: resourcemanager:8032
+      PATH: "/spark/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      SPARK_HOME: "/spark"
+      PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_master_data:/spark/work
     networks:
@@ -317,6 +320,9 @@ services:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
       YARN_CONF_yarn_resourcemanager_hostname: resourcemanager
       YARN_CONF_yarn_resourcemanager_address: resourcemanager:8032
+      PATH: "/spark/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      SPARK_HOME: "/spark"
+      PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_worker1_data:/spark/work
     networks:
@@ -340,6 +346,9 @@ services:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
       YARN_CONF_yarn_resourcemanager_hostname: resourcemanager
       YARN_CONF_yarn_resourcemanager_address: resourcemanager:8032
+      PATH: "/spark/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      SPARK_HOME: "/spark"
+      PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_worker2_data:/spark/work
     networks:
