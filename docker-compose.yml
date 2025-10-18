@@ -296,6 +296,7 @@ services:
       PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_master_data:/spark/work
+      - ./infrastructure/spark/app:/opt/spark/apps
     networks:
       - iot-network
     healthcheck:
@@ -328,6 +329,7 @@ services:
       PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_worker1_data:/spark/work
+      - ./infrastructure/spark/app:/opt/spark/apps
     networks:
       - iot-network
 
@@ -354,6 +356,7 @@ services:
       PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_worker2_data:/spark/work
+      - ./infrastructure/spark/app:/opt/spark/apps
     networks:
       - iot-network
 

@@ -1,0 +1,9 @@
+certifi==2025.10.5
+influxdb-client==1.49.0
+kafka-python==2.2.15
+python-dateutil==2.9.0.post0
+reactivex==4.0.4
+setuptools==80.9.0
+six==1.17.0
+typing_extensions==4.15.0
+urllib3==2.5.0
