@@ -26,6 +26,9 @@ volumes:
   spark_worker1_data:
   spark_worker2_data:
   spark_history_data:
+  influxdb_data:
+  mongodb_data:
+  mysql_data:
 
 # ============================================
 # SERVICES
@@ -351,5 +354,57 @@ services:
       PYTHONPATH: "/spark/python:/spark/python/lib/py4j-0.10.9-src.zip"
     volumes:
       - spark_worker2_data:/spark/work
+    networks:
+      - iot-network
+
+  # INFLUXDB - Données en temps réel
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    hostname: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_ADMIN_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_ADMIN_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+    volumes:
+     - influxdb_data:/var/lib/influxdb2
+    networks:
+      - iot-network
+
+  # MONGODB - Données processed
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    hostname: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+     - mongodb_data:/data/db
+    networks:
+      - iot-network
+
+  # --- MYSQL (Données de configuration et métadonnées) ---
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    hostname: mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     networks:
       - iot-network
