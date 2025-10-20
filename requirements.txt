@@ -1,6 +1,7 @@
 certifi==2025.10.5
 influxdb-client==1.49.0
 kafka-python==2.2.15
+numpy==2.3.4
 python-dateutil==2.9.0.post0
 reactivex==4.0.4
 setuptools==80.9.0

@@ -8,7 +8,7 @@ from kafka import KafkaProducer
 # --- Configuration ---
 KAFKA_BROKER_URL = 'localhost:9092'
 KAFKA_TOPIC_NAME = 'iot_sensor_data'
-SENSOR_IDS = ['sensor-alpha-01', 'sensor-beta-02', 'sensor-gamma-03']
+SENSOR_IDS = ['sensor-alpha-01', 'sensor-beta-02', 'sensor-gamma-03', 'sensor-delta-04', 'sensor-epsilon-05']
 
 # Producteur Kafka
 producer = KafkaProducer(
