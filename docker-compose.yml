@@ -29,6 +29,7 @@ volumes:
   influxdb_data:
   mongodb_data:
   mysql_data:
+  grafana_data:
 
 # ============================================
 # SERVICES
@@ -410,3 +411,20 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     networks:
       - iot-network
+  
+  # MONITORING
+  grafana:
+    image: grafana/grafana:10.2.2 
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - iot-network
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
