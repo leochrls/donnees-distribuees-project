@@ -77,7 +77,7 @@ def process_batch(df, epoch_id):
         output_df.write \
             .format("mongodb") \
             .mode("append") \
-            .option("uri", MONGO_URI) \
+            .option("connection.uri", MONGO_URI) \
             .option("database", "iot_project_db") \
             .option("collection", "processed_data") \
             .save()
@@ -94,7 +94,7 @@ def process_batch(df, epoch_id):
             df_anomalies.write \
                 .format("mongodb") \
                 .mode("append") \
-                .option("uri", MONGO_URI) \
+                .option("connection.uri", MONGO_URI) \
                 .option("database", "iot_project_db") \
                 .option("collection", "anomalies") \
                 .save()
